@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
 class Neighbor(object):
 	def __init__(self, test_point, train_point, distance):
@@ -15,7 +14,6 @@ class KNearestNeighbors(object):
 		mistakes = 0
 
 		for test_data, classy_data in zip(testing_data, classified_data):
-			print(test_data.label, classy_data.label)
 			if(test_data.label != classy_data.label):
 				mistakes += 1
 
@@ -66,7 +64,7 @@ class Point(object):
 		self.y = y
 
 		if func != None:
-			if y > func(x):
+			if y > func(x + np.random.rand() - 0.5):
 				self.label = 1
 			else:
 				self.label = -1
@@ -76,24 +74,3 @@ class Point(object):
 
 	def get_label(self):
 		return self.label
-
-#points = [Point(4 * np.pi * np.random.rand(), -1 + 2 * np.random.rand(), lambda x: np.cos(x)**2 - 0.5) for i in range(10000)]
-points = [Point(-1 + 2 * np.random.rand(), np.random.rand(), lambda x: x**2) for i in range(10000)]
-training_data = points[2000:]
-testing_data = points[:2000]
-
-knn = KNearestNeighbors(5)
-
-classified_data = knn.classify_data(training_data, testing_data)
-
-print(knn.accuracy(testing_data, classified_data))
-
-for data in classified_data:
-	if(data.label == 1):
-		plt.scatter(data.x, data.y, label=data.label, color="g")
-	else:
-		plt.scatter(data.x, data.y, label=data.label, color="b")
-
-plt.show()
-
-
