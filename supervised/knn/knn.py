@@ -19,7 +19,7 @@ class KNearestNeighbors(object):
 
 		return float((len(testing_data) - mistakes))/len(testing_data)
 
-	def classify_data(self, training_data, testing_data):
+	def classify_data(self, training_data, testing_data, weighted=True):
 		classified_points  = []
 
 		for test_point in testing_data:
@@ -29,7 +29,7 @@ class KNearestNeighbors(object):
 
 			neighbours = sorted(neighbours, key=lambda neighbour: neighbour.distance)[:self.k]
 
-			label_count = self.count_neighbour_labels(neighbours)
+			label_count = self.count_neighbour_labels(neighbours, weighted)
 
 			if(label_count[0] > label_count[1]):
 				point = Point(test_point.x, test_point.y)
@@ -42,15 +42,20 @@ class KNearestNeighbors(object):
 
 		return classified_points
 
-	def count_neighbour_labels(self, neighbours):
+	def count_neighbour_labels(self, neighbours, weighted=True):
 		label_count = [0, 0]
 
 		for neighbour in neighbours:
-			if neighbour.train_point.label == 1:
-				label_count[0] += 1
+			if(weighted == True):
+				if neighbour.train_point.label == 1:
+					label_count[0] += 1./neighbour.distance
+				else:
+					label_count[1] += 1./neighbour.distance
 			else:
-				label_count[1] += 1
-
+				if neighbour.train_point.label == 1:
+					label_count[0] += 1
+				else:
+					label_count[1] += 1
 		return label_count
 
 
