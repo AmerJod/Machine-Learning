@@ -2,9 +2,9 @@ import numpy as np
 
 
 class GaussianNaiveBayes(object):
-	'''
-	A class that represents a Gaussian Naïve Bayes classifier
-	'''
+    '''
+    A class that represents a Gaussian Naïve Bayes classifier
+    '''
 
     def __init__(self):
         self.mu = None
@@ -13,14 +13,14 @@ class GaussianNaiveBayes(object):
         self.number_of_classes = None
 
     def fit(self, X, y):
-    	'''
-    	Calculates the mean and standard deviation for 
-    	each class.
+        '''
+        Calculates the mean and standard deviation for 
+        each class.
 
-    	Arguments:
-    		X: the features of the training data
-    		y: the labels of the training data
-    	'''
+        Arguments:
+            X: the features of the training data
+            y: the labels of the training data
+        '''
         classes = set(y)
         number_of_data_points = X.shape[0]
         number_of_features = X.shape[1]
@@ -46,45 +46,52 @@ class GaussianNaiveBayes(object):
         self.number_of_classes = number_of_classes
 
     def predict(self, X):
-    	'''
-    	Predictions the class for given features.
+        '''
+        Predictions the class for given features.
 
-    	Arguments:
-    		X: the features of the data points to be classified.
+        Arguments:
+            X: the features of the data points to be classified.
 
-    	Returns:
-    		predictions: the predictions of the model.
-    		probs: the probabilities assigned to each data points.
-    	'''
+        Returns:
+            predictions: the predictions of the model.
+            probs: the probabilities assigned to each data points.
+        '''
         probs = []
         predictions = []
 
         for x in X:
             prob = np.zeros(self.number_of_classes)
             for c in range(self.number_of_classes):
-                power = -0.5 * ((x - self.mu[c, :]) / self.std[c, :])**2
-                exp = np.array([np.exp(p) for p in power])
+                power = -0.5 * \
+                    ((x - self.mu[c, :]) / (self.std[c, :] + 10E-100))**2
 
-                log_likelihood = np.sum(np.log(exp + 10E-300))
-                log_prior = np.log(self.prior[c] + 10E-300)
+                coefficient = - \
+                    np.log(np.sqrt(2 * np.pi * self.std[c, :] + 10E-10))
+
+                log_likelihood = np.sum(coefficient + power)
+                log_prior = np.log(self.prior[c])
                 prob[c] = log_prior + log_likelihood
-            
+
             prediction = np.argmax(prob)
 
             probs.append(prob)
             predictions.append(prediction)
 
+        predictions = np.array(predictions)
+
         return predictions, probs
 
     def accuracy(self, y, y_hat):
-    	'''
-    	Calculates the accuracy of the model
+        '''
+        Calculates the accuracy of the model
 
-    	Arguments: 
-    		y: the true labels of the data
-    		y_hat: the predicted labels of the data
-    	'''
-    	number_of_points = y.shape[0]
-    	accuracy = sum(y == y_hat)/number_of_points
+        Arguments: 
+            y: the true labels of the data
+            y_hat: the predicted labels of the data
+        '''
 
-    	return accuracy
+        number_of_points = y.shape[0]
+
+        ratio = sum(y == y_hat) / number_of_points
+
+        return ratio
