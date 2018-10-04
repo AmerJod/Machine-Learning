@@ -6,6 +6,7 @@ A repository dedicated to practising and implementing different machine learning
 - Linear Regression
 - Ridge Regression
 - Kernel Ridge Regression
+- Naïve Bayes Classifier
 
 ### Unsupervised Learning
 - KMeans
