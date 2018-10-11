@@ -125,6 +125,8 @@ class GaussianMixture(object):
            sigma: the std of the clusters
            phi: the mixture coefficients
         '''
+        self.initialise(X)
+
         for i in range(iters):
             # Find the probability for each cluster, given the data points
             responsibilities = self.expectation_step(X)
