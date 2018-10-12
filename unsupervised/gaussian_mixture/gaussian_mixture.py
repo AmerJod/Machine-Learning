@@ -111,7 +111,7 @@ class GaussianMixture(object):
 
         self.sigma = new_sigma
 
-    def fit(self, X, iters=100):
+    def fit(self, X, threshold=1E-10):
         '''
         Performs the EM algorithm to find the parameters
         that maximise the likelihood of the data.
@@ -127,12 +127,22 @@ class GaussianMixture(object):
         '''
         self.initialise(X)
 
-        for i in range(iters):
+        # Initialise the change in mean
+        change_in_mu = 1E10
+
+        # While the change in mu is more than the threshold
+        while change_in_mu > threshold:
+            old_mu = self.mu
+
             # Find the probability for each cluster, given the data points
             responsibilities = self.expectation_step(X)
 
             # Find parameters that maximise the new assignments
             self.maximisation_step(X, responsibilities)
+
+            new_mu = self.mu
+
+            change_in_mu = np.linalg.norm(new_mu - old_mu)
 
         mu = self.mu
         sigma = self.sigma
