@@ -37,6 +37,12 @@ class KNearestNeighbours(object):
         the euclidean distance between all points and the new point(s). 
         A label is decided for a new point by the majority class of its 
         neighbours
+
+        Arguments:
+            X: the unseen points to be predicted.
+
+        Returns:
+            predictions: the label predictions for the unseen points.
         '''
 
         # Store the predictions
@@ -88,6 +94,9 @@ class KNearestNeighbours(object):
         Arguments:
             true_labels: the true labels of the data.
             predicted_labels: the predicted labels of the data.
+
+        Returns:
+            acc: the accuracy of the model.
         '''
         acc = np.mean(true_labels == predicted_labels)
         return acc
