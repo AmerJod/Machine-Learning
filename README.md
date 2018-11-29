@@ -8,9 +8,11 @@ A repository dedicated to practising and implementing different machine learning
 - Kernel Ridge Regression
 - Naïve Bayes Classifier
 - Logistic Regression
+- Decision Tree
 
 ### Unsupervised Learning
 - KMeans
+- Gaussian Mixture Model
 - Principle Component Analysis
 - Autoencoder
 - Variational Autoencoder
