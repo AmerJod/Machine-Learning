@@ -9,6 +9,7 @@ A repository dedicated to practising and implementing different machine learning
 - Naïve Bayes Classifier
 - Logistic Regression
 - Decision Tree
+- K-Nearest Neighbours
 
 ### Unsupervised Learning
 - KMeans
