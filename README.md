@@ -10,6 +10,7 @@ A repository dedicated to practising and implementing different machine learning
 - Logistic Regression
 - Decision Tree
 - K-Nearest Neighbours
+- Neural Processes
 
 ### Unsupervised Learning
 - KMeans
