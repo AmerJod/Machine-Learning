@@ -53,6 +53,7 @@ class NeuralProcess(object):
         Instantiates the encoder and decoder networks using
         the parameters extracted in the constructor.
         '''
+
         self.encoder = Encoder(input_size=self.x_dim + self.y_dim,
                                r_dim=self.r_dim,
                                z_dim=self.z_dim,
@@ -89,14 +90,17 @@ class NeuralProcess(object):
                      z_std_all: the latent variable std for all the points
 
         '''
-        x_all = torch.cat((x_context, x_target), dim=0)
-        y_all = torch.cat((y_context, y_target), dim=0)
+        x_all = torch.cat((x_context, x_target), dim=1)
+        y_all = torch.cat((y_context, y_target), dim=1)
 
         z_mu_context, z_std_context = self.encoder(x_context, y_context)
         z_mu_all, z_std_all = self.encoder(x_all, y_all)
 
         eps_samples = torch.randn((number_of_samples, self.z_dim))
-        z_samples = z_std_all.diag().mul(eps_samples) + z_mu_all
+
+        z_samples = z_std_all.mul(eps_samples) + z_mu_all
+        z_samples = z_samples.reshape(
+            z_samples.shape[1], z_samples.shape[0], -1)
         y_pred_mu, y_pred_std = self.decoder(x_target, z_samples)
 
         outputs = {
@@ -122,9 +126,11 @@ class NeuralProcess(object):
             y_context: the y_context points
             seed: to provide deterministic results.
         '''
+        batch_size = x_target.shape[0]
         if x_context is None:
+
             z_samples = MultivariateNormal(torch.zeros(self.z_dim), torch.eye(
-                self.z_dim)).sample((number_of_samples,))
+                self.z_dim)).sample((batch_size * number_of_samples,))
             z_mu = None
             z_std = None
 
@@ -133,12 +139,15 @@ class NeuralProcess(object):
                 torch.manual_seed(seed)
 
             z_mu, z_std = self.encoder(x_context, y_context)
-            z_samples = MultivariateNormal(
-                z_mu, z_std).sample((number_of_samples, ))
 
-        y_star, _ = self.decoder(x_target, z_samples)
+            eps_samples = torch.randn((number_of_samples, self.z_dim))
 
-        return y_star, z_mu, z_std
+            z_samples = z_std.mul(eps_samples) + z_mu
+            z_samples = z_samples.reshape(number_of_samples, -1, self.z_dim)
+
+        y_star, y_std = self.decoder(x_target, z_samples)
+
+        return y_star, y_std, z_mu, z_std
 
 
 class Encoder(nn.Module):
@@ -167,7 +176,10 @@ class Encoder(nn.Module):
         self.fc = nn.Sequential(
             nn.Linear(input_size, hidden_size),
             activation,
-            nn.Linear(hidden_size, r_dim)
+            nn.Linear(hidden_size, hidden_size),
+            activation,
+            nn.Linear(hidden_size, r_dim),
+            activation
         )
 
         # Instantiate the part of the network that maps r to
@@ -208,14 +220,15 @@ class Encoder(nn.Module):
             context_mean: the latent mean
             context_std: the latent std.
         '''
-        context = torch.cat((x, y), dim=1)
-
+        context = torch.cat((x, y), dim=2)
         r = self.fc(context)
         representation = self.aggregate(r)
+        representation = representation.view(representation.shape[0], 1, -1)
 
-        context_mean = self.fc_context_mean(representation).view(self.z_dim)
-        context_log_var = self.fc_context_std(representation).view(self.z_dim)
-        context_std = torch.exp(0.5 * context_log_var).diag()
+        context_mean = self.fc_context_mean(representation)
+
+        context_log_var = self.fc_context_std(representation)
+        context_std = torch.exp(0.5 * context_log_var)
 
         return context_mean, context_std
 
@@ -231,7 +244,7 @@ class Encoder(nn.Module):
         Output:
             r_bar: a mean over the representations
         '''
-        r_bar = torch.mean(r, 0)
+        r_bar = torch.mean(r, 1)
         return r_bar
 
 
@@ -261,6 +274,10 @@ class Decoder(nn.Module):
             activation,
             nn.Linear(hidden_size, hidden_size),
             activation,
+            nn.Linear(hidden_size, hidden_size),
+            activation,
+            nn.Linear(hidden_size, hidden_size),
+            activation
         )
 
         self.fc_mean = nn.Sequential(
@@ -292,12 +309,15 @@ class Decoder(nn.Module):
                 mu: the target prediction mean
                 std: the target prediction std.
         '''
-        z = z.repeat(target_x.size(0), 1, 1)
-        z = z.transpose(0, 1)
+        batch_size = target_x.shape[0]
+        number_of_samples = z.shape[0]
 
-        target_x = target_x.unsqueeze(0).repeat(z.size(0), 1, 1)
+        z = z.reshape(batch_size * number_of_samples, 1, -1)
+        z = z.repeat(1, target_x.shape[1], 1)
 
-        xr_concat = torch.cat((target_x, z), dim=2)
+        target_x_expand = target_x.repeat(number_of_samples, 1, 1)
+
+        xr_concat = torch.cat((target_x_expand, z), dim=2)
 
         decode = self.fc_decode(xr_concat)
         mu, logvar = self.fc_mean(decode), self.fc_std(decode)
