@@ -11,6 +11,7 @@ A repository dedicated to practising and implementing different machine learning
 - Decision Tree
 - K-Nearest Neighbours
 - Neural Processes
+- Neural Translation
 
 ### Unsupervised Learning
 - KMeans
